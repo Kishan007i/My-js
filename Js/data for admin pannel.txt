@@ -1,0 +1,1270 @@
+ 
+       // Component creation functions
+
+function createCategoryTab(category, isActive = false) {
+  const tab = document.createElement('button');
+  tab.className = `category-tab ${isActive ? 'active' : ''}`;
+  tab.dataset.category = category.id;
+  tab.innerHTML = `
+    <span class="category-icon">
+      <img src="${category.icon}" alt="${category.title} Icon">
+    </span>
+    <span class="category-name">${category.title}</span>
+  `;
+  return tab;
+}
+/* old  */
+function createSubcategoryTab(subcategory, categoryId, isActive = false) {
+  const tab = document.createElement('button');
+  tab.className = `subcategory-tab ${isActive ? 'active' : ''}`;
+  tab.dataset.subcategory = subcategory.id;
+  tab.dataset.category = categoryId;
+  tab.innerHTML = `
+     <span class="subcategory-icon">
+      <img src="${subcategory.icon}" alt="${subcategory.title} Icon">
+    </span>
+    <span class="subcategory-name">${subcategory.name}</span>
+  `;
+  return tab;
+}
+
+// Optional: Add intersection observer for scroll animations
+function addScrollAnimations() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, index) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }, index * 100);
+      }
+    });
+  });
+  
+  document.querySelectorAll('.subcategory-tab').forEach(tab => {
+    tab.style.opacity = '0';
+    tab.style.transform = 'translateY(20px)';
+    observer.observe(tab);
+  });
+}
+/* end */
+
+/* voice */
+// Prevent multiple initialization
+if (!window.voicePlayerInitialized) {
+    window.voicePlayerInitialized = true;
+
+    class VoicePlayer {
+        constructor() {
+            this.currentAudio = null;
+            this.currentButton = null;
+            this.statusElement = document.getElementById('voiceStatus');
+            this.clickHandler = null; // Store reference to avoid duplicates
+            this.visibilityHandler = null;
+            this.init();
+        }
+
+        init() {
+            // Remove existing listeners first
+            this.cleanup();
+            
+            // Create bound handler to avoid duplicates
+            this.clickHandler = (e) => {
+                if (e.target.closest('.voice-button')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.handleVoiceClick(e.target.closest('.voice-button'));
+                }
+            };
+
+            // Add event delegation listener
+            document.addEventListener('click', this.clickHandler);
+            
+            // Visibility change handler
+            this.visibilityHandler = () => {
+                if (document.hidden && this.currentAudio && !this.currentAudio.paused) {
+                    this.currentAudio.pause();
+                }
+            };
+            document.addEventListener('visibilitychange', this.visibilityHandler);
+        }
+
+        // Clean up existing listeners
+        cleanup() {
+            if (this.clickHandler) {
+                document.removeEventListener('click', this.clickHandler);
+            }
+            if (this.visibilityHandler) {
+                document.removeEventListener('visibilitychange', this.visibilityHandler);
+            }
+        }
+
+        // Method to refresh listeners (call this after DOM updates)
+        refreshListeners() {
+            // Event delegation handles new buttons automatically
+            // No need to attach individual listeners
+        }
+
+        handleVoiceClick(button) {
+            const voicePath = button.getAttribute('data-voice');
+            
+            if (!voicePath) {
+                this.showStatus('Voice file path નથી મળી');
+                return;
+            }
+
+            // If same button clicked while playing, stop it
+            if (this.currentButton === button && this.currentAudio && !this.currentAudio.paused) {
+                this.stopAudio();
+                return;
+            }
+
+            // Stop current audio if playing
+            if (this.currentAudio && !this.currentAudio.paused) {
+                this.stopAudio();
+            }
+
+            this.playAudio(voicePath, button);
+        }
+
+        playAudio(voicePath, button) {
+            this.currentButton = button;
+            this.currentAudio = new Audio(voicePath);
+
+            // Preload the audio
+            this.currentAudio.preload = 'auto';
+
+            // Add event listeners
+            this.currentAudio.addEventListener('loadstart', () => {
+                this.showStatus('Audio લોડ થઈ રહી છે...');
+            });
+
+            this.currentAudio.addEventListener('canplay', () => {
+                this.showStatus('Audio તૈયાર છે');
+            });
+
+            this.currentAudio.addEventListener('play', () => {
+                button.classList.add('playing');
+                this.showStatus('Audio ચાલી રહી છે');
+            });
+
+            this.currentAudio.addEventListener('pause', (e) => {
+                button.classList.remove('playing');
+                // Store reference to audio before it might be set to null
+                const audio = e.target;
+                if (audio && typeof audio.currentTime === 'number' && typeof audio.duration === 'number' && audio.currentTime < audio.duration) {
+                    this.showStatus('Audio પૌઝ થઈ');
+                }
+            });
+
+            this.currentAudio.addEventListener('ended', () => {
+                button.classList.remove('playing');
+                this.showStatus('Audio પૂર્ણ થઈ');
+                this.cleanupAudio();
+            });
+
+            this.currentAudio.addEventListener('error', (e) => {
+                button.classList.remove('playing');
+                this.showStatus(`Audio ફાઈલ લોડ નથી થઈ: ${voicePath}`);
+                console.error('Audio Error Details:');
+                console.error('Path:', voicePath);
+                console.error('Error:', e);
+                if (this.currentAudio) {
+                    console.error('ReadyState:', this.currentAudio.readyState);
+                    console.error('NetworkState:', this.currentAudio.networkState);
+                    if (this.currentAudio.error) {
+                        console.error('Error Code:', this.currentAudio.error.code);
+                        console.error('Error Message:', this.currentAudio.error.message);
+                    }
+                }
+                this.cleanupAudio();
+            });
+
+            // Better error handling for play() method
+            const playPromise = this.currentAudio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        // Audio started successfully
+                        console.log('Audio playing successfully:', voicePath);
+                    })
+                    .catch(error => {
+                        console.error('Play failed:');
+                        console.error('Error name:', error.name);
+                        console.error('Error message:', error.message);
+                        console.error('Path:', voicePath);
+                        
+                        button.classList.remove('playing');
+                        
+                        // Handle different types of errors
+                        if (error.name === 'NotAllowedError') {
+                            this.showStatus('Audio play કરવાની permission નથી');
+                        } else if (error.name === 'NotSupportedError') {
+                            this.showStatus('Audio format support નથી');
+                        } else if (error.name === 'AbortError') {
+                            this.showStatus('Audio લોડ થવામાં problem');
+                        } else {
+                            this.showStatus('Audio play નથી થઈ - ફાઈલ check કરો');
+                        }
+                        
+                        this.cleanupAudio();
+                    });
+            } else {
+                // Fallback for older browsers
+                try {
+                    this.currentAudio.play();
+                } catch (error) {
+                    console.error('Fallback play failed:', error);
+                    this.showStatus('Browser audio support નથી');
+                    this.cleanupAudio();
+                }
+            }
+        }
+
+        cleanupAudio() {
+            this.currentButton = null;
+            this.currentAudio = null;
+        }
+
+        stopAudio() {
+            if (this.currentAudio) {
+                // Store reference before setting to null
+                const audio = this.currentAudio;
+                const button = this.currentButton;
+                
+                // Set to null first to prevent event handlers from accessing null reference
+                this.currentAudio = null;
+                this.currentButton = null;
+                
+                // Now safely manipulate the audio
+                try {
+                    audio.pause();
+                    if (typeof audio.currentTime === 'number') {
+                        audio.currentTime = 0;
+                    }
+                } catch (e) {
+                    console.error('Error stopping audio:', e);
+                }
+                
+                if (button) {
+                    button.classList.remove('playing');
+                }
+            }
+            this.showStatus('Audio બંધ કરી');
+        }
+
+        showStatus(message) {
+            if (this.statusElement) {
+                this.statusElement.textContent = message;
+                this.statusElement.classList.add('show');
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    if (this.statusElement) {
+                        this.statusElement.classList.remove('show');
+                    }
+                }, 3000);
+            }
+        }
+
+        // Method to completely destroy the instance
+        destroy() {
+            this.stopAudio();
+            this.cleanup();
+            this.statusElement = null;
+        }
+    }
+
+    // Initialize when page loads
+    const initVoicePlayer = () => {
+        // Destroy existing instance if any
+        if (window.voicePlayer && typeof window.voicePlayer.destroy === 'function') {
+            window.voicePlayer.destroy();
+        }
+        window.voicePlayer = new VoicePlayer();
+    };
+
+    // Check if DOM is already loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initVoicePlayer);
+    } else {
+        initVoicePlayer();
+    }
+
+    // Safe method to call after DOM updates
+    window.initializeVoiceButtons = function() {
+        if (window.voicePlayer && typeof window.voicePlayer.refreshListeners === 'function') {
+            window.voicePlayer.refreshListeners();
+        } else {
+            initVoicePlayer();
+        }
+    };
+
+    // Observer to detect DOM changes (with throttling)
+    let observerTimeout;
+    const observer = new MutationObserver((mutations) => {
+        clearTimeout(observerTimeout);
+        observerTimeout = setTimeout(() => {
+            let hasVoiceButtons = false;
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1 && node.querySelector && node.querySelector('.voice-button')) {
+                            hasVoiceButtons = true;
+                        }
+                    });
+                }
+            });
+            
+            if (hasVoiceButtons && window.voicePlayer) {
+                window.voicePlayer.refreshListeners();
+            }
+        }, 100);
+    });
+
+    // Start observing DOM changes
+    if (document.body) {
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    } else {
+        document.addEventListener('DOMContentLoaded', () => {
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        });
+    }
+}
+/* end */
+function createServiceCard(service) {
+  const card = document.createElement('div');
+  card.className = 'service-card fade-in-up';
+  card.dataset.category = service.category;
+  card.dataset.subcategory = service.subcategory;
+  card.dataset.serviceId = service.id;
+
+  // Create carousel
+  const carousel = document.createElement('div');
+  carousel.className = 'carousel-container';
+
+  // Add images
+  service.images.forEach((image, index) => {
+    const slide = document.createElement('div');
+    slide.className = `carousel-slide ${index === 0 ? 'active' : ''}`;
+    slide.innerHTML = `<img src="${image}" alt="${service.title} ${index + 1}" loading="lazy">`;
+    carousel.appendChild(slide);
+  });
+
+  // Add navigation buttons
+  const prevButton = document.createElement('button');
+  prevButton.className = 'carousel-button prev';
+  prevButton.innerHTML = '‹';
+  prevButton.setAttribute('aria-label', 'Previous image');
+  
+  const nextButton = document.createElement('button');
+  nextButton.className = 'carousel-button next';
+  nextButton.innerHTML = '›';
+  nextButton.setAttribute('aria-label', 'Next image');
+
+  // Add dots
+  const dotsContainer = document.createElement('div');
+  dotsContainer.className = 'carousel-dots';
+  
+  service.images.forEach((_, index) => {
+    const dot = document.createElement('div');
+    dot.className = `dot ${index === 0 ? 'active' : ''}`;
+    dot.setAttribute('aria-label', `Go to image ${index + 1}`);
+    dot.addEventListener('click', () => showSlide(carousel, index));
+    dotsContainer.appendChild(dot);
+  });
+
+  carousel.appendChild(prevButton);
+  carousel.appendChild(nextButton);
+  carousel.appendChild(dotsContainer);
+
+  // Create content
+  const content = document.createElement('div');
+  content.className = 'card-content';
+  content.innerHTML = `<span class="voice">${service.voiceHtml}</span>
+       <h2 class="card-title">${service.titleHtml || service.title}</h2> 
+     <p class="short-description">${service.shortDescription}</p>
+    <div class="long-description">       
+      <div class="long-description-content">
+        ${service.longDescription}
+        <p class="price">₹${service.price.toLocaleString()}</p>         
+      </div>
+    </div>
+    <div class="button-container">
+      <button class="btn btn-secondary view-more-btn">
+        <span class="btn-text">View More ▽</span>
+      </button>
+       <a href="${service.visitLink}" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+        <span class="btn-text">Visit</span>
+      </a>
+    </div>
+  `;
+  
+  card.appendChild(carousel);
+  card.appendChild(content);
+
+  // Add event listeners
+  setupCarouselEvents(carousel, service.images.length);
+  setupCardEvents(card);
+
+  return card;
+}
+
+function setupCarouselEvents(carousel, imageCount) {
+  let currentSlide = 0;
+  const slides = carousel.querySelectorAll('.carousel-slide');
+  const dots = carousel.querySelectorAll('.dot');
+  const prevButton = carousel.querySelector('.carousel-button.prev');
+  const nextButton = carousel.querySelector('.carousel-button.next');
+
+  prevButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentSlide = (currentSlide - 1 + imageCount) % imageCount;
+    showSlide(carousel, currentSlide);
+  });
+
+  nextButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentSlide = (currentSlide + 1) % imageCount;
+    showSlide(carousel, currentSlide);
+  });
+
+  // Auto-slide
+  let autoSlideInterval = setInterval(() => {
+    if (document.contains(carousel)) {
+      currentSlide = (currentSlide + 1) % imageCount;
+      showSlide(carousel, currentSlide);
+    } else {
+      clearInterval(autoSlideInterval);
+    }
+  }, 5000);
+
+  // Pause auto-slide on hover
+  carousel.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
+  carousel.addEventListener('mouseleave', () => {
+    autoSlideInterval = setInterval(() => {
+      if (document.contains(carousel)) {
+        currentSlide = (currentSlide + 1) % imageCount;
+        showSlide(carousel, currentSlide);
+      }
+    }, 5000);
+  });
+
+  // Touch events for mobile
+  let startX, endX;
+  carousel.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+  });
+
+  carousel.addEventListener('touchmove', (e) => {
+    endX = e.touches[0].clientX;
+  });
+
+  carousel.addEventListener('touchend', () => {
+    if (startX > endX + 50) { // Swipe Left
+      currentSlide = (currentSlide + 1) % imageCount;
+      showSlide(carousel, currentSlide);
+    } else if (startX < endX - 50) { // Swipe Right
+      currentSlide = (currentSlide - 1 + imageCount) % imageCount;
+      showSlide(carousel, currentSlide);
+    }
+  });
+}
+
+function setupCardEvents(card) {
+  const viewMoreButton = card.querySelector('.view-more-btn');
+  const longDescription = card.querySelector('.long-description');
+  const btnText = viewMoreButton.querySelector('.btn-text');
+  
+  viewMoreButton.addEventListener('click', () => {
+    const isExpanded = longDescription.classList.toggle('expanded');
+    btnText.textContent = isExpanded ? 'View Less ∆' : 'View More ▽';
+    
+    // Smooth scroll to card if expanding
+    if (isExpanded) {
+      setTimeout(() => {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  });
+}
+
+function showSlide(carousel, index) {
+  const slides = carousel.querySelectorAll('.carousel-slide');
+  const dots = carousel.querySelectorAll('.dot');
+  
+  slides.forEach(slide => slide.classList.remove('active'));
+  dots.forEach(dot => dot.classList.remove('active'));
+  
+  if (slides[index]) slides[index].classList.add('active');
+  if (dots[index]) dots[index].classList.add('active');
+}
+
+function createNoResultsMessage(searchTerm = '') {
+  const noResults = document.createElement('div');
+  noResults.className = 'no-results fade-in-up';
+  noResults.id = 'no-results-message';
+  
+  if (searchTerm) {
+    noResults.innerHTML = `
+      <h3>No services found</h3>
+      <p>No services found matching "${searchTerm}". Try searching with different keywords.</p>
+    `;
+  } else {
+    noResults.innerHTML = `
+      <h3>No services available</h3>
+      <p>No services are available in this category at the moment.</p>
+    `;
+  }
+  
+  return noResults;
+}
+
+function createCategorySectionHeader(category) {
+  const header = document.createElement('div');
+  header.className = 'category-section-header fade-in-up';
+  header.dataset.category = category.id;
+  header.innerHTML = `
+    <h2>${category.title}</h2>
+    <p>${category.description}</p>
+  `;
+  return header;
+}
+
+
+
+// Service Categories Data with Subcategories
+const serviceCategories = [
+  {
+    id: "document-services",
+    title: "દસ્તાવેજી સેવાઓ",
+    icon: "svg/icons/adhar.png",
+    description: "EPFO, પાન કાર્ડ, આધાર સહિત તમામ દસ્તાવેજ સંબંધિત સેવાઓ.",
+    subcategories: [
+      {
+        id: "personal-docs",
+        name: "વ્યક્તિગત દસ્તાવેજો",
+        icon: "https://cdn-icons-png.freepik.com/256/2016/2016366.png?ga=GA1.1.663578574.1750866847&semt=ais_hybrid"
+      },
+      {
+        id: "government-docs",
+        name: "સરકારી દસ્તાવેજો",
+        icon: "svg/icons/epfo.png"
+      }
+    ],
+    services: [
+      {
+        id: "epfo-service",
+        title: "EPFO વિથડ્રોઅલ",
+        titleHtml: `માત્ર <span class="highlight">₹299  </span> માં PF વિથડ્રોઅલ  
+        `,
+        voiceHtml: `<button class="voice-button" data-voice="voice/EPFO.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+           shortDescription: "ઝડપી અને સરળ PF વિથડ્રોઅલ સેવા",
+        longDescription: `
+         
+        PF વિથડ્રોઅલ માટે નિષ્ણાત સહાયતા મેળવો — દસ્તાવેજો થી લઇ અંતિમ મંજૂરી સુધીની તમામ પ્રક્રિયા અમે સરળ અને સુરક્ષિત બનાવિયે છે. તમારું કામ, હવે અમારી જાવાબદારી.
+        <div class="service-list"> 
+          <ul> 
+            <li><strong>• પાસવર્ડ બદલાવવું:</strong> મફત</li> 
+            <li><strong>• PF વિથડ્રોઅલ:</strong> ₹299</li>
+            <li><strong>• એક્ઝિટ તારીખ સુધારણા:</strong> ₹149</li> 
+            <li><strong>• PF ટ્રાન્સફર અને અન્ય:</strong> ₹299</li> 
+            <li><strong>• જરૂરી દસ્તાવેજો:</strong><br>
+        - UAN નંબર<br>
+        - પાસવર્ડ (હોય તો)<br>
+        - આધાર કાર્ડ<br>
+        - રજિસ્ટર્ડ મોબાઇલ નંબર<br>
+        - બેંક પાસબુક અથવા ચેકબુક (ફોટો)<br>
+        - પાન કાર્ડ<br>
+        
+           
+          </ul> 
+        </div>
+        <p class="offer"><strong>• વિશેષ ઓફર:</strong> અમારી <span class="highlight">નવી સ્પેશિયલ કોમ્બો ઓફર</span> મેળવો અને તમામ સેવાઓ મેળવો માત્ર <span class="highlight">₹299માં!</span></p>`,
+        price: 299,
+        images: [
+                 'img/epfo1.jpg',
+                 'img/epfo3.jpg',
+                 'img/epfo2.jpg'
+        
+        ],
+        visitLink: 'https://wa.me/919157437847?text=હું%20EPFO%20સેવા%20વિશે%20માહિતી%20ચાહું છું',
+        category: "document-services",
+        subcategory: "government-docs",
+        keywords: ["epfo", "pf", "withdrawal", "provident fund", "employee"]
+      },
+      {
+        id: "pan-card-service",
+        title: "પાન કાર્ડ",
+        titleHtml: `માત્ર<span class="highlight"> ₹199</span> માં<br> પાન કાર્ડ મેળવો             `,
+               voiceHtml: `<button class="voice-button" data-voice="voice/pancard.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+                  
+            
+        shortDescription: "24 કલાકમાં તમારું પાન કાર્ડ ની PDF મેળવો",
+        longDescription: ` – તમારા પાન કાર્ડ માટે નિષ્ણાત સહાયતા મેળવોહવે પ્રક્રિયા વધુ સરળ અને સુરક્ષિત બનાવો. અમે તમારી તરફથી તમામ દસ્તાવેજી કામગીરી સંભાળીએ છીએ હવે PAN માટે અરજી કરવી એ સરળ અને વિશ્વસનીય અનુભવ છે.
+
+        <div class="service-list"> 
+           <br>
+          <ul> 
+            <li><strong>• પાન કાર્ડ સેવા:</strong> ₹199</li> 
+            <li><strong>• માત્ર 24 કલાકમાં પાન કાર્ડ ની PDF મેળવો</strong></li> 
+            <li><strong>• જરૂરી દસ્તાવેજ:</strong> <br> - આધાર કાર્ડ
+           <br>  - રજિસ્ટર્ડ મોબાઇલ નંબર</li> 
+          </ul> 
+        </div>`,
+        price: 199,
+        images: [
+          'img/pancard1.jpg',
+          'img/pancard2.jpg'
+        ],
+        visitLink: 'https://wa.me/919157437847?text=હું%20પાન%20કાર્ડ%20માટે%20અરજી%20કરવા%20માગું છું',
+        category: "document-services",
+        subcategory: "government-docs",
+        keywords: ["pan", "card", "tax", "income", "government"]
+      },
+      
+      {
+  id: "pvc-aadhar-service",
+  title: "PVC આધાર કાર્ડ બુક કરો",
+  titleHtml: `માત્ર <span class="highlight">₹149</span> માં PVC આધાર કાર્ડ બુક કરો  `,
+   voiceHtml: `<button class="voice-button" data-voice="voice/adharcard.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+            
+  shortDescription: "આધાર કાર્ડ હવે પોકેટમાં — ઓર્ડર કરો PVC આધાર કાર્ડ માત્ર ₹149 માં",
+  longDescription: `
+    તમારા આધાર કાર્ડને હવે પોકેટ સાઇઝના PVC કાર્ડમાં બદલાવવાનું શ્રેષ્ઠ તક. અમારી સેવા દ્વારા સરળ અને સુરક્ષિત બુકિંગનો લાભ લો.
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• PVC આધાર કાર્ડ બુકિંગ:</strong> ₹149</li> 
+        <li><strong>• જરૂરી દસ્તાવેજો:</strong>
+        <br>
+        <br>
+        - આધાર નંબર<br>
+        - રજિસ્ટર્ડ મોબાઇલ નંબર<br>
+      </ul> 
+    </div>`,
+  price: 149,
+  images: [
+    'img/pvc-aadhar1.jpg',
+    'img/pvc-aadhar2.jpg',
+    'img/pvc-aadhar3.jpg'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=હું%20PVC%20આધાર%20કાર્ડ%20સેવા%20બાબતે%20માહિતી%20ચાહું%20છું',
+  category: "document-services",
+  subcategory: "government-docs",
+  keywords: ["pvc aadhar", "aadhar card", "uidai", "government card", "aadhar booking"]
+},
+{
+  id: "birth-certificate-service",
+  title: "બર્થ સર્ટિફિકેટ સેવા",
+  titleHtml: `માત્ર <span class="highlight">₹299</span> માં બર્થ સર્ટિફિકેટ બનાવો`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/birth.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "ઝડપી અને સરળ જન્મ સર્ટિફિકેટ મેળવવાની સેવા",
+  longDescription: `
+    હવે બર્થ સર્ટિફિકેટ મેળવવો હોય તો ચિંતા કરવાની જરૂર નથી. અમારી સેવા દ્વારા આપને ઝડપી અને સરળ રીતે બધું મળી શકે છે — ડોક્યુમેન્ટ્સ વેરિફિકેશનથી લઈને ફાઇનલ સર્ટિફિકેટ સુધી.
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• જન્મ સર્ટિફિકેટ સેવા:</strong> ₹199</li> 
+        <li><strong>• જરૂરી દસ્તાવેજો:</strong><br>
+        - બાળકનું નામ<br>
+        - માતા-પિતાનું નામ<br>
+        - જન્મ તારીખ<br>
+        - જન્મ સ્થળ<br>
+        - હોસ્પિટલ સર્ટિફિકેટ (જો હોય)<br>
+        - પિતાનો/માતાનો આધાર કાર્ડ<br>
+        - એડ્રેસ પ્રૂફ<br>
+      </ul> 
+    </div>
+    <p class="offer"><strong>• નોંધ:</strong> ગામ કે શહેર અનુસાર વિધિવત પ્રક્રિયા અલગ હોઈ શકે છે</p>`,
+  price: 299,
+  images: [
+    'img/birth1.jpg',
+    'img/birth2.jpg',
+    'img/birth3.jpg'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=હું%20બર્થ%20સર્ટિફિકેટ%20સેવા%20વિશે%20માહિતી%20ચાહું%20છું',
+  category: "document-services",
+  subcategory: "government-docs",
+  keywords: ["birth certificate", "janm patrak", "government docs", "certificate"]
+},
+{
+  id: "caste-certificate-service",
+  title: "SC/ST જાતિ પ્રમાણપત્ર સેવા",
+  titleHtml: `માત્ર <span class="highlight">₹299</span> માં SC/ST જાતિ પ્રમાણપત્ર મેળવો`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/cast.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "સરળ પ્રક્રિયા સાથે ઝડપથી મેળવો તમારું જાતિ પ્રમાણપત્ર",
+  longDescription: `
+    SC/ST જાતિ પ્રમાણપત્ર ઘણી સરકારી યોજના અને લાભ માટે મહત્વપૂર્ણ છે. અમારી સેવા દ્વારા તમે સરળતાથી વિધિવત પ્રમાણપત્ર મેળવવામાં મદદ મેળવી શકો છો.
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• SC/ST જાતિ પ્રમાણપત્ર સેવા:</strong> ₹249</li> 
+        <li><strong>• જરૂરી દસ્તાવેજો:</strong><br>
+        - અરજીકર્તાનો આધાર કાર્ડ<br>
+        - પિતાનું જાતિ પ્રમાણપત્ર (જો હોય)<br>
+        - સ્કૂલ લીવિંગ સર્ટિફિકેટ<br>
+        - રેશન કાર્ડ અથવા મતદાર ઓળખપત્ર<br>
+        - સરનામું પુરાવા<br>
+        - ફોટો (પાસપોર્ટ  સાઇઝ)<br>
+      </ul> 
+    </div>
+    <p class="offer"><strong>• નોંધ:</strong> તમારું પ્રમાણપત્ર જિલ્લા મુજબ ઓનલાઈન કે મેન્યુઅલ પ્રક્રિયા પર આધારિત હોઈ શકે છે.</p>`,
+  price: 299,
+  images: [
+    'img/caste1.jpg',
+    'img/caste2.jpg',
+    'img/caste3.jpg'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=હું%20SC/ST%20જાતિ%20પ્રમાણપત્ર%20સેવા%20વિશે%20માહિતી%20ચાહું%20છું',
+  category: "document-services",
+  subcategory: "government-docs",
+  keywords: ["caste certificate", "sc caste", "st caste", "pramanpatra", "government certificate"]
+},
+{
+  id: "income-certificate-service",
+  title: "આવક પ્રમાણપત્ર સેવા",
+  titleHtml: `માત્ર <span class="highlight">₹299</span> માં આવક પ્રમાણપત્ર મેળવો`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/income.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "સરકારી યોજનાઓ માટે આવક પ્રમાણપત્ર ઝડપથી અને સરળ રીતે મેળવો",
+  longDescription: `
+    આવક પ્રમાણપત્ર વિવિધ સરકારી લાભ, શિષ્યવૃતિ અને લોકરંજક યોજનાઓ માટે જરૂરી હોય છે. અમારી સેવા તમને ઝડપી અને વિશ્વસનીય રીતે આવક પ્રમાણપત્ર મેળવવામાં મદદ કરે છે.
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• આવક પ્રમાણપત્ર સેવા:</strong> ₹199</li> 
+        <li><strong>• જરૂરી દસ્તાવેજો:</strong><br>
+        - અરજીકર્તાનો આધાર કાર્ડ<br>
+        - સરનામું પુરાવા (રેશન કાર્ડ / લાઇટ બિલ)<br>
+        - આવકનો પુરાવો (પગાર પત્ર / નોકરીનું સર્ટિફિકેટ / શપથપત્ર)<br>
+        - પાન કાર્ડ (જો હોય)<br>
+        - બેંક પાસબુક કોપી (પસંદગી પ્રમાણે)<br>
+        - પાસપોર્ટ સાઇઝ ફોટો<br>
+      </ul> 
+    </div>
+    <p class="offer"><strong>• નોંધ:</strong> આવક પ્રમાણપત્રનો ઉપયોગ શિષ્યવૃતિ, રિઝર્વેશન અને અન્ય સરકારી યોજનામાં થાય છે.</p>`,
+  price: 299,
+  images: [
+    'img/income1.jpg',
+    'img/income2.jpg',
+    'img/income3.jpg'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=હું%20આવક%20પ્રમાણપત્ર%20સેવા%20વિશે%20માહિતી%20ચાહું%20છું',
+  category: "document-services",
+  subcategory: "government-docs",
+  keywords: ["income certificate", "aavak pramanpatra", "government docs", "certificate service"]
+},
+{
+  id: "ration-card-service",
+  title: "રેશન કાર્ડ સેવાઓ",
+  titleHtml: `માત્ર <span class="highlight">₹299</span> માં રેશન કાર્ડ સંબંધિત તમામ સેવા હવે એક જ જગ્યાએ`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/ration.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "નવું રેશન કાર્ડ, સભ્ય ઉમેરવા/કાઢવા અને KYC અપડેટ જેવી તમામ સેવાઓ ઉપલબ્ધ",
+  longDescription: `
+    હવે રેશન કાર્ડ સંબંધિત દરેક કાર્ય માટે દફતરની લાઇનમાં ઉભા રહેવાની જરૂર નથી. અમારા દ્વારા તમને મળશે સરળ, ઝડપી અને વિશ્વસનીય સેવા:
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• નવું રેશન કાર્ડ બનાવવું:</strong> ₹249</li> 
+        <li><strong>• નામ ઉમેરવું / નવા સભ્ય ઉમેરવા:</strong> ₹149</li>
+        <li><strong>• નામ દૂર કરવું / સભ્ય કાઢવું:</strong> ₹149</li>
+        <li><strong>• રેશન કાર્ડ KYC અપડેટ:</strong> ₹99</li>
+        <li><strong>• જરૂરી દસ્તાવેજો:</strong><br>
+          - આધાર કાર્ડ (સभी સભ્યોના)<br>
+          - જૂનું રેશન કાર્ડ (જો હોય)<br>
+          - સરનામું પુરાવા (લાઇટ બિલ, રેશન કાર્ડ)<br>
+          - જન્મ પ્રમાણપત્ર / લગ્ન સર્ટિફિકેટ (જરૂર મુજબ)<br>
+          - પાસપોર્ટ સાઇઝ ફોટો<br>
+          - રજિસ્ટર્ડ મોબાઇલ નંબર<br>
+        </li>
+      </ul> 
+    </div>
+    <p class="offer"><strong>• નોંધ:</strong> દરેક પ્રક્રિયા જિલ્લાની નિયમ મુજબ કરવામાં આવશે. 100% સહાય અને ફોલોઅપ ઉપલબ્ધ.</p>`,
+  price: 249,
+  images: [
+    'img/ration1.jpg',
+    'img/ration2.jpg',
+    'img/ration3.jpg'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=હું%20રેશન%20કાર્ડ%20સેવા%20વિશે%20માહિતી%20ચાહું%20છું',
+  category: "document-services",
+  subcategory: "government-docs",
+  keywords: ["ration card", "name add", "name remove", "kyc", "new ration card", "government service"]
+},
+{
+  id: "widow-certificate-service",
+  title: "વિધવા પ્રમાણપત્ર સેવા",
+  titleHtml: `માત્ર <span class="highlight">₹299</span> માં વિધવા પ્રમાણપત્ર મેળવો`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/vidhva.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "સરકારી સહાય અને પેન્શન માટે વિધવા પ્રમાણપત્ર ઝડપી અને સરળ રીતે મેળવો",
+  longDescription: `
+    વિધવા પ્રમાણપત્ર વિવિધ સરકારી યોજનાઓ જેમ કે પેન્શન, વિધવા સહાય વગેરે માટે જરૂરી છે. અમે તમને સહેલાઈથી ઓનલાઈન પ્રક્રિયા દ્વારા સહાય કરીએ છીએ.
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• વિધવા પ્રમાણપત્ર સેવા:</strong> ₹249</li> 
+        <li><strong>• જરૂરી દસ્તાવેજો:</strong><br>
+          - અરજીકર્તાનો આધાર કાર્ડ<br>
+          - પતિનું મરણ પત્ર (Death Certificate)<br>
+          - લગ્નનો પુરાવો (લગ્નનો પ્રમાણપત્ર જો હોય)<br>
+          - સરનામું પુરાવા<br>
+          - રેશન કાર્ડ (જો હોય)<br>
+          - પાસપોર્ટ સાઇઝ ફોટો<br>
+          - રજિસ્ટર્ડ મોબાઇલ નંબર<br>
+        </li>
+      </ul> 
+    </div>
+    <p class="offer"><strong>• નોંધ:</strong> અરજી જિલ્લાની નિયમ મુજબ પ્રક્રિયા થશે. અમે પૂરી સહાયતા કરીશું અરજીથી લઈને પ્રમાણપત્ર સુધી.</p>`,
+  price: 299,
+  images: [
+    'img/widow1.jpg',
+    'img/widow2.jpg',
+    'img/widow3.jpg'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=હું%20વિધવા%20પ્રમાણપત્ર%20સેવા%20વિશે%20માહિતી%20ચાહું%20છું',
+  category: "document-services",
+  subcategory: "government-docs",
+  keywords: ["widow certificate", "વિધવા પ્રમાણપત્ર", "death certificate", "government help", "pension"]
+},
+{
+  id: "scholarship-form-service",
+  title: "સ્કોલરશીપ ફોર્મ સેવા",
+  titleHtml: `માત્ર <span class="highlight">₹149</span> માં સ્કોલરશીપ ફોર્મ ભરો`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/scholarship.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "તમારા બાળકો માટે સરકારી સ્કોલરશીપ ફોર્મ હવે સહેલાઈથી ભરો",
+  longDescription: `
+    સરકાર દ્વારા આપવામાં આવતી વિવિધ સ્કોલરશીપ યોજનાઓ માટે ફોર્મ ભરવાની સંપૂર્ણ સહાય. સમયસર ફોર્મ ભરીને લાભ મેળવો.
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• સ્કોલરશીપ ફોર્મ ભરવાની સેવા:</strong> ₹149</li> 
+        <li><strong>• જરૂરી દસ્તાવેજો:</strong><br>
+          - વિદ્યાર્થીનો આધાર કાર્ડ<br>
+          - સ્કૂલ/કૉલેજ ID કાર્ડ<br>
+          - છેલ્લી પરીક્ષાનું માર્કશીટ<br>
+          - આવક પ્રમાણપત્ર<br>
+          - જાતિ પ્રમાણપત્ર (જો લાગુ પડે)<br>
+          - બેંક પાસબુક<br>
+          - પાસપોર્ટ સાઇઝ ફોટો<br>
+          - મોબાઇલ નંબર<br>
+        </li>
+      </ul> 
+    </div>
+    <p class="offer"><strong>• નોંધ:</strong> અમારું સ્ટાફ દરેક સ્ટેટ / સેન્ટ્રલ સ્કોલરશીપ માટે માર્ગદર્શન આપે છે.</p>`,
+  price: 149,
+  images: [
+    'img/scholarship1.jpg',
+    'img/scholarship2.jpg',
+    'img/scholarship3.jpg'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=હું%20સ્કોલરશીપ%20ફોર્મ%20સેવા%20વિશે%20માહિતી%20ચાહું%20છું',
+  category: "form-services",
+  subcategory: "student-services",
+  keywords: ["scholarship", "student help", "form fillup", "government scheme", "study support"]
+},
+{
+  id: "admission-form-service",
+  title: "એડમિશન ફોર્મ સેવા",
+  titleHtml: `માત્ર <span class="highlight">₹149</span> માં એડમિશન ફોર્મ ભરો`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/admission.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "સ્કૂલ/કૉલેજ એડમિશન માટે ફોર્મ ભરાવવાની સંપૂર્ણ સહાય",
+  longDescription: `
+    સ્કૂલ કે કૉલેજ એડમિશન માટે જરૂરી તમામ ઓનલાઇન અથવા મેન્યુઅલ ફોર્મ હવે ભરાવાનું કામ અમારું. સમય બચાવો અને ભૂલો ટાળો.
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• એડમિશન ફોર્મ ભરવાની સેવા:</strong> ₹149</li> 
+        <li><strong>• જરૂરી દસ્તાવેજો:</strong><br>
+          - વિદ્યાર્થીનો આધાર કાર્ડ<br>
+          - જન્મ પ્રમાણપત્ર<br>
+          - છેલ્લી પરીક્ષાનું માર્કશીટ<br>
+          - ટ્રાન્સફર સર્ટિફિકેટ (જો હોય)<br>
+          - સ્કૂલ ID (જો હોય)<br>
+          - પાસપોર્ટ સાઇઝ ફોટો<br>
+          - રજિસ્ટર્ડ મોબાઇલ નંબર<br>
+        </li>
+      </ul> 
+    </div>
+    <p class="offer"><strong>• નોંધ:</strong> દરેક બોર્ડ અને યુનિવર્સિટી માટે અલગ-અલગ માર્ગદર્શન આપવામાં આવે છે.</p>`,
+  price: 149,
+  images: [
+    'img/admission1.jpg',
+    'img/admission2.jpg',
+    'img/admission3.jpg'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=હું%20એડમિશન%20ફોર્મ%20સેવા%20વિશે%20માહિતી%20ચાહું%20છું',
+  category: "form-services",
+  subcategory: "student-services",
+  keywords: ["admission", "form fillup", "school admission", "college admission", "education"]
+},
+  {
+  id: "resume-building-service",
+  title: "તમારું રેસ્યુમે બનાવો",
+  titleHtml: `તમારું રેસ્યુમે બનાવો <br><span class="highlight">માત્ર ₹149માં</span>`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/resume.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "માત્ર ₹149માં વ્યાવસાયિક રીતે તૈયાર કરેલું રેસ્યુમે મેળવો.",
+  longDescription: `અમે વ્યાવસાયિક અને ઉદ્યોગના પ્રમાણભૂત મુજબનું રેસ્યુમે બનાવવા ની સેવા આપે છીએ — આકર્ષક કિંમતમાં!
+  <div class="service-list">
+    <ul>
+       <br>
+      <li><strong>• Basic પેકેજ:</strong> ₹149 - ઉદ્યોગ અનુસાર કસ્ટમાઈઝ્ડ રેસ્યુમે</li>
+      <li><strong>• Standard પેકેજ:</strong> ₹199 - રેસ્યુમે + કવર લેટર</li>
+    
+      
+      <li><strong>• જરૂરી દસ્તાવેજો:</strong><br>
+        - તમારું નામ અને સંપર્ક વિગત<br>
+        - એજ્યુકેશન વિગતો<br>
+        - વર્તમાન અથવા પહેલાનું કામનું અનુભવ (જો હોય)<br>
+        - કૌશલ્ય (Skills) અને ભાષાઓ<br>
+        - તમારું કરંટ રેસ્યુમે (જો હોય)<br>
+      </li>
+    </ul>
+   </div>`,
+  price: 149,
+          images: [
+          'img/resume.png',
+          'img/resume2.png'
+        ],
+ visitLink: 'https://wa.me/919157437847?text=હું%20મારું%20રેસ્યુમે%20બનાવાવવા%20માગું%20છું',
+         category: "document-services",
+        subcategory: "personal-docs",
+        keywords: ["aadhaar", "pvc", "card", "identity", "uid"]
+      }
+    ]
+  },
+  {
+    id: "Travels",
+    title: "મુસાફરી સેવાઓ",
+    icon: "svg/icons/travels.png",
+    description: "EPFO, પાન કાર્ડ, આધાર સહિત તમામ દસ્તાવેજ સંબંધિત સેવાઓ.",
+    subcategories: [
+      {
+        id: "privet",
+        name: "ખાનગી મુસાફરી",
+        icon: "🏛️"
+      },
+{
+  id: "tour",
+  name: "ટૂર અને ટ્રાવેલ્સ",
+  icon: "👤"
+}
+],
+services: [
+  {
+    id: "epfo-service",
+    title: "EPFO ઉપાડ",
+    titleHtml: `EPFO ઉપાડ માત્ર <br><span class="highlight">₹299 માં</span>`,
+     voiceHtml: `<button class="voice-button" data-voice="voice/service 02.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+    shortDescription: "ઝડપી અને સરળ પીએફ ઉપાડ સેવા",
+    longDescription: `તમારા પીએફ ઉપાડ પ્રક્રિયામાં નિષ્ણાત સહાય મેળવો. અમે તમામ દસ્તાવેજી પ્રક્રિયાની જવાબદારી લઈએ છીએ અને સુગમ અનુભવ સુનિશ્ચિત કરીએ છીએ. અમારી ટીમ દરેક પગથિયે તમને માર્ગદર્શન આપશે.
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• પાસવર્ડ બદલવો:</strong> મફત</li> 
+        <li><strong>• પીએફ ઉપાડ:</strong> ₹199</li>
+        <li><strong>• એક્ઝિટ તારીખ સુધારો:</strong> ₹149</li> 
+        <li><strong>• પીએફ ટ્રાન્સફર વગેરે:</strong> ₹299</li> 
+      </ul> 
+    </div>
+    <p class="offer"><strong>• ખાસ ઓફર:</strong> અમારું <span class="highlight">નવું સ્પેશિયલ કોમ્બો ઑફર</span> લો અને તમામ સેવાઓ મેળવો માત્ર <span class="highlight">₹299 માં!</span></p>`,
+    price: 299,
+    images: [
+      'https://images.pexels.com/photos/6863183/pexels-photo-6863183.jpeg?auto=compress&cs=tinysrgb&w=400',
+      'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg?auto=compress&cs=tinysrgb&w=400'
+    ],
+    visitLink: 'https://wa.me/919157437847?text=I%20want%20to%20know%20about%20EPFO%20services',
+    category: "ટ્રાવેલ્સ",
+    subcategory: "ટૂર",
+    keywords: ["epfo", "pf", "withdrawal", "provident fund", "employee"]
+  }
+]
+},
+{
+  id: "event-services",
+  title: "ઈવેન્ટ સેવાઓ",
+  icon: "svg/icons/party.png",
+  description: "તમામ પ્રકારની ઈવેન્ટ સેવાઓ જેમાં ડીજે સાઉન્ડ, ડેકોરેશન, કેટરિંગ, ફોટોગ્રાફી અને વધુ ઘણું સામેલ છે.",
+  subcategories: [
+    {
+      id: "dj-sound",
+      name: "ડીજે સાઉન્ડ",
+      icon: "svg/icons/dj.png"
+    },
+    {
+      id: "band",
+      name: "બેન્ડ",
+      icon: "https://cdn-icons-png.freepik.com/256/8605/8605582.png?uid=R204865109&ga=GA1.1.59614169.1748877786&semt=ais_hybrid"
+    },
+    {
+      id: "mandap",
+      name: "મંડપ",
+      icon: "https://cdn-icons-png.freepik.com/256/2788/2788777.png?uid=R204865109&ga=GA1.1.59614169.1748877786&semt=ais_hybrid"
+    },
+    {
+      id: "cameraman",
+      name: "ફોટોગ્રાફર",
+      icon: "https://cdn-icons-png.freepik.com/256/1920/1920996.png?uid=R204865109&ga=GA1.1.59614169.1748877786&semt=ais_hybrid"
+    }
+  ],
+  services: [
+    {
+      id: "dev-dj-service",
+      title: "દેવ ડીજે સાઉન્ડ",
+      titleHtml: `દેવ ડીજે સાઉન્ડ<br><span class="highlight">બુકિંગ માત્ર ₹19,999 થી શરૂ</span>`,
+       voiceHtml: `<button class="voice-button" data-voice="voice/service 02.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+      shortDescription: "દેવ ડીજેના જબરદસ્ત સાઉન્ડ અને લાઇટિંગ સાથે તમારું ઇવેન્ટ યાદગાર બનાવો!",
+      longDescription: `અમે લગ્ન, જન્મદિન અને કોર્પોરેટ પાર્ટી જેવી તમામ પ્રકારની ઇવેન્ટ્સ માટે સંપૂર્ણ ડીજે સાઉન્ડ સોલ્યુશન્સ પ્રદાન કરીએ છીએ. શક્તિશાળી મ્યૂઝિક, પ્રોફેશનલ લાઇટિંગ અને ક્રાઉડને ઊર્જાથી ભરપુર કરવાનો અનુભવ લો દેવ ડીજે સાથે.
+      <div class="service-list"> 
+        <ul> 
+          <li><strong>• બેસિક ડીજે સેટઅપ:</strong> ₹19,999 થી શરૂ</li>
+          <li><strong>• પ્રીમિયમ લાઇટિંગ સાથે ડીજે:</strong> ₹29,999</li>
+          <li><strong>• લગ્ન અને સંગીત પેકેજ:</strong> ₹49,999</li>
+        </ul> 
+      </div>`,
+      price: 19999,
+      images: [
+        'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=400',
+        'https://images.pexels.com/photos/1540406/pexels-photo-1540406.jpeg?auto=compress&cs=tinysrgb&w=400'
+      ],
+      visitLink: 'https://wa.me/919157437847?text=I%20want%20to%20book%20Dev%20DJ%20Sound%20for%20my%20event',
+      category: "event-services",
+      subcategory: "dj-sound",
+      keywords: ["dev", "dj", "sound", "music", "party", "wedding", "event"]
+    },
+   {
+  id: "dj-service", // unique ID
+  title: "DJ સેવા",
+  titleHtml: `<span class="highlight">મારુ DJ બુક કરો</span> તમારા ઇવેંટ માટે ખાસ સંગીત સાથે`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/service 02.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+ 
+  shortDescription: "શાદી, પાર્ટી કે ફંકશન માટે મસ્ત DJ સેવાઓ",
+  longDescription: `
+    હવે તમારું ફંક્શન બનાવો વધુ યાદગાર! અમારા અનુભવ ધરાવતાં DJ સાથે તમને મળશે ધમાકેદાર સંગીત, લાઇટિંગ અને સંપૂર્ણ મ્યુઝિકલ અનુભવ.
+    <div class="service-list"> 
+      <ul> 
+        <li><strong>• DJ Booking (સાઉન્ડ + લાઇટ):</strong> ₹4999 થી શરૂ</li>
+        <li><strong>• અલગ-અલગ પેકેજ ઉપલબ્ધ છે:</strong><br>
+          - DJ with Dance Floor<br>
+          - Fog Machine / Light Show<br>
+          - Wedding / Haldi / Reception Specials<br>
+        </li>
+        <li><strong>• તમારી જરૂર મુજબ કસ્ટમાઇઝ પેકેજ બનાવો</strong></li>
+      </ul> 
+    </div>
+    <p class="offer"><strong>• વિશેષ ઓફર:</strong> 2 દિવસ પહેલા બુકિંગ પર <span class="highlight">10% ડિસ્કાઉન્ટ</span></p>`,
+  price: 4999,
+  images: [
+    'img/dj1.jpg',
+    'img/dj2.jpg',
+    'img/dj3.jpg'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=હું%20DJ%20સેવા%20માટે%20બુકિંગ%20કરવું%20માગું%20છું',
+  category: "event-services",
+  subcategory: "party",
+  keywords: ["dj", "party", "wedding", "music", "sound", "dance"]
+},
+{
+  id: "meldi-dj-service",
+  title: "મેલડી ડીજે",
+  titleHtml: `મેલડી ડીજે<br><span class="highlight">બુકિંગ ફક્ત ₹6,000/દિવસે</span>`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/service 02.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "તમારા ખાસ પ્રસંગો માટે પ્રકાશ અને વાહન (છોટા હાથી) સાથે સસ્તું ડીજે સેટઅપ.",
+  longDescription: `મેલડી ડીજે તમારા ઉજવણીઓમાં ઊર્જા અને ઉમંગ લાવે છે, તે પણ બજેટ અનુકૂળ અને શક્તિશાળી સેટઅપ સાથે. લગ્ન, જન્મદિન, યાત્રા વગેરે માટે યોગ્ય. સંપૂર્ણ પ્રકાશ અને સંગીત સિસ્ટમ છોટા હાથી વાહનમાં લોડ થયેલ છે.
+  <div class="service-list">
+    <ul>
+      <li><strong>• 1 દિવસ માટે ડીજે સેવા:</strong> ₹6,000 (આવાજ + લાઈટિંગ સહિત)</li>
+      <li><strong>• વાહન પ્રકાર:</strong> છોટા હાથી</li>
+      <li><strong>• ગ્રાહક રેટિંગ:</strong> ⭐ 3.4 / 5</li>
+    </ul>
+  </div>`,
+  price: 6000,
+  images: [
+    'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=400',
+    'https://images.pexels.com/photos/1540406/pexels-photo-1540406.jpeg?auto=compress&cs=tinysrgb&w=400'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=I%20want%20to%20book%20Meldi%20DJ%20for%20my%20event',
+  category: "event-services",
+  subcategory: "dj-sound",
+  keywords: ["મેલડી", "ડીજે", "સાઉન્ડ", "સંગીત", "પાર્ટી", "લગ્ન", "પ્રસંગ", "બજેટ"]
+},
+{
+  id: "purav-dj-service",
+  title: "પુરવ ડીજે",
+  titleHtml: `પુરવ ડીજે<br><span class="highlight">પ્રીમિયમ સેટઅપ ₹25,000</span>`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/service 02.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "નવીનતમ ઉપકરણો અને વ્યાવસાયિક લાઈટિંગ સાથે પ્રીમિયમ ડીજે સેવાઓ.",
+  longDescription: `પુરવ ડીજે ઉચ્ચસ્તરીય પ્રસંગો માટે ધ્વનિ અને લાઈટિંગની પ્રીમિયમ વ્યવસ્થા પ્રદાન કરે છે. નવીનતમ સાધનો અને અનુભવી ડીજે સાથે વ્યવસાયિક સેટઅપ.
+  <div class="service-list">
+    <ul>
+      <li><strong>• પ્રીમિયમ ડીજે સેટઅપ:</strong> ₹25,000</li>
+      <li><strong>• વ્યાવસાયિક લાઈટિંગ:</strong> સમાવિષ્ટ</li>
+      <li><strong>• ગ્રાહક રેટિંગ:</strong> ⭐ 4.8 / 5</li>
+    </ul>
+  </div>`,
+  price: 25000,
+  images: [
+    'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=400',
+    'https://images.pexels.com/photos/1540406/pexels-photo-1540406.jpeg?auto=compress&cs=tinysrgb&w=400'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=I%20want%20to%20book%20Purav%20DJ%20for%20my%20event',
+  category: "event-services",
+  subcategory: "dj-sound",
+  keywords: ["પુરવ", "ડીજે", "સાઉન્ડ", "સંગીત", "પાર્ટી", "લગ્ન", "પ્રસંગ", "પ્રીમિયમ"]
+},
+{
+  id: "sanam-band-service",
+  title: "સનમ બેન્ડ",
+  titleHtml: `સનમ બેન્ડ<br><span class="highlight">લાઇવ પરફોર્મન્સ ₹35,000</span>`,
+   voiceHtml: `<button class="voice-button" data-voice="voice/service 02.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+  shortDescription: "લગ્નો અને વિશેષ પ્રસંગો માટે જીવંત સંગીત પ્રદર્શન.",
+  longDescription: `સનમ બેન્ડ સાથે જીવંત સંગીતનો અનુભવ કરો. લગ્ન, સંગીત અને વિશેષ ઉજવણીઓ માટે વ્યાવસાયિક સંગીતકારો.
+  <div class="service-list">
+    <ul>
+      <li><strong>• લાઇવ બેન્ડ પરફોર્મન્સ:</strong> ₹35,000</li>
+      <li><strong>• 4-5 વ્યાવસાયિક સંગીતકારો</strong></li>
+      <li><strong>• સાઉન્ડ સાધનો:</strong> સમાવિષ્ટ</li>
+    </ul>
+  </div>`,
+  price: 35000,
+  images: [
+    'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=400',
+    'https://images.pexels.com/photos/1540406/pexels-photo-1540406.jpeg?auto=compress&cs=tinysrgb&w=400'
+  ],
+  visitLink: 'https://wa.me/919157437847?text=I%20want%20to%20book%20Sanam%20Band%20for%20my%20event',
+  category: "event-services",
+  subcategory: "band",
+  keywords: ["સનમ", "બેન્ડ", "લાઇવ", "સંગીત", "લગ્ન", "સંગીત સમારંભ", "પરફોર્મન્સ"]
+} ,
+     {
+        id: "plumbing-service",
+        title: "Plumbing Services",
+        titleHtml: `Plumbing Services<br><span class="highlight">Starts at ₹299</span>`,
+         voiceHtml: `<button class="voice-button" data-voice="voice/service 02.mp3">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+            `,
+
+        shortDescription: "Professional plumbing repairs and installation",
+        longDescription: `Our expert plumbers can handle all your plumbing needs from fixing leaks to installing new fixtures.
+        <div class="service-list"> 
+          <ul> 
+            <li><strong>• Leak Repairs:</strong> ₹299</li>
+            <li><strong>• Tap Installation:</strong> ₹399</li>
+            <li><strong>• Bathroom Fitting:</strong> ₹799</li>
+          </ul> 
+        </div>`,
+        price: 299,
+        images: [
+          'https://images.pexels.com/photos/8486944/pexels-photo-8486944.jpeg?auto=compress&cs=tinysrgb&w=400',
+          'https://images.pexels.com/photos/8486945/pexels-photo-8486945.jpeg?auto=compress&cs=tinysrgb&w=400'
+        ],
+        visitLink: 'https://wa.me/919157437847?text=I%20need%20plumbing%20services',
+        category: "home-services",
+        subcategory: "repairs",
+        keywords: ["plumbing", "plumber", "leak", "tap", "bathroom", "repair"]
+      }
+    ]
+  }
+];
+
+
+
