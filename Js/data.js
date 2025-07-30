@@ -131,7 +131,7 @@ const serviceCategories = [
     </div>`,
   price: 149,
   images: [
-    'img/aadhar.png'
+    'img/aadhar.jpg'
      ],
   visitLink: 'https://wa.me/919157437847?text=હું%20PVC%20આધાર%20કાર્ડ%20સેવા%20બાબતે%20માહિતી%20ચાહું%20છું',
   category: "document-services",
