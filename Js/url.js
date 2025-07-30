@@ -1,33 +1,3 @@
-// render.js
-
-// Render all services
-services.forEach(service => {
-  const card = document.createElement("div");
-  card.className = "service-card";
-  card.id = service.id; // 👈 Important: Card ID = service.id
-
-  card.innerHTML = `
-    <h2>${service.title}</h2>
-    <p>${service.shortDescription}</p>
-  `;
-
-  document.getElementById("services-container").appendChild(card);
-});
-
-// Scroll to card if #hash in URL
-window.addEventListener("DOMContentLoaded", () => {
-  const hash = window.location.hash.substring(1);
-  if (hash) {
-    // Timeout ensures card is already rendered
-    setTimeout(() => {
-      const target = document.getElementById(hash);
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth" });
-      }
-    }, 300);
-  }
-});
-//end
 // Custom URL shortener with base64 encoding
         function encodeUrl(url) {
             // Remove localhost and common parts
