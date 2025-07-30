@@ -1,12 +1,4 @@
 
-  card.appendChild(carousel);
-  card.appendChild(content);
-
-  setupCarouselEvents(carousel, service.images.length);
-  setupCardEvents(card);
-
-  return card;
-}
 //end
 // Custom URL shortener with base64 encoding
         function encodeUrl(url) {
