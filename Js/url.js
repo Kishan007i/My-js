@@ -1,4 +1,4 @@
-////end
+
 // Custom URL shortener with base64 encoding
         function encodeUrl(url) {
             // Remove localhost and common parts
