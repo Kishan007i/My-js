@@ -1,86 +1,186 @@
-// Function to show toast messages
-        function showToast(toastId, message) {
-            const toast = document.getElementById(toastId);
-            if (message) {
-                toast.textContent = message;
+// Simple encryption function using Base64 encoding with custom transformation
+function encryptLink(link) {
+    // Add some random characters and encode
+    const timestamp = Date.now().toString();
+    const combined = link + '|' + timestamp;
+    
+    // Base64 encode and add some transformation
+    let encrypted = btoa(combined);
+    
+    // Add some custom transformation to make it look more encrypted
+    encrypted = encrypted.split('').reverse().join('');
+    encrypted = 'ENC_' + encrypted + '_END';
+    
+    return encrypted;
+}
+
+// Decrypt function (for reference, but not used in this implementation)
+function decryptLink(encryptedLink) {
+    try {
+        // Remove prefix and suffix
+        let encrypted = encryptedLink.replace('ENC_', '').replace('_END', '');
+        
+        // Reverse the string
+        encrypted = encrypted.split('').reverse().join('');
+        
+        // Base64 decode
+        const decoded = atob(encrypted);
+        const [originalLink] = decoded.split('|');
+        
+        return originalLink;
+    } catch (error) {
+        console.error('Decryption failed:', error);
+        return null;
+    }
+}
+
+// Main function to copy encrypted registration link
+async function copyRegistrationLink() {
+    const originalLink = 'https://service-x.in/Registration/reg-page.html';
+    
+    try {
+        // Encrypt the link
+        const encryptedLink = encryptLink(originalLink);
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(encryptedLink);
+        
+        // Show success message
+        showSuccessMessage();
+        
+        console.log('Encrypted link copied:', encryptedLink);
+        
+    } catch (error) {
+        console.error('Failed to copy link:', error);
+        
+        // Fallback for older browsers
+        fallbackCopyToClipboard(encryptLink(originalLink));
+    }
+}
+
+// Fallback copy method for older browsers
+function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showSuccessMessage();
+        console.log('Encrypted link copied (fallback):', text);
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+        alert('Failed to copy link. Please try again.');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// Show success message
+function showSuccessMessage() {
+    // Remove any existing success message
+    const existingMessage = document.querySelector('.copy-success-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create and show success message
+    const message = document.createElement('div');
+    message.className = 'copy-success-message';
+    message.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: all 0.3s ease;
+    `;
+    message.innerHTML = '✓ Encrypted registration link copied to clipboard!';
+    
+    document.body.appendChild(message);
+    
+    // Animate in
+    setTimeout(() => {
+        message.style.opacity = '1';
+        message.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        message.style.opacity = '0';
+        message.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
             }
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
+        }, 300);
+    }, 3000);
+}
 
-        // 1st Button - Open Service-X website
-        function openServiceX() {
-            showToast('serviceToast');
-            window.open('https://service-x-re-page.netlify.app', '_blank');
-        }
+// Optional: Add some CSS for better button styling
+const buttonStyles = `
+<style>
+.reg-containerr {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
 
-        // 2nd Button - Download APK
-        function downloadAPK() {
-            showToast('downloadToast');
-            // Create a download link for the APK file
-            const link = document.createElement('a');
-            link.href = 'app/service-x.in.apk';
-            link.download = 'service-x.in.apk';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+.reg-btn {
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
 
-        // 3rd Button - Open Registration Page
-        function openRegistration() {
-            window.location.href = 'Registration/reg-page.html';
-        }
+.reg-btn:hover {
+    background: #0056b3;
+}
 
-        // 4th Button - Copy encrypted registration link
-        function copyRegistrationLink() {
-            // Create encrypted/shortened link - using base64 encoding for simplicity
-            const originalLink = window.location.origin + '/Registration/reg-page.html';
-            const encryptedPath = btoa('Registration/reg-page.html').replace(/[+=]/g, '').substring(0, 12);
-            const shortLink = window.location.origin + '/r/' + encryptedPath;
-            
-            // Copy to clipboard
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(shortLink).then(() => {
-                    showToast('copyToast', 'Short link copied to clipboard!');
-                }).catch(() => {
-                    fallbackCopyTextToClipboard(shortLink);
-                });
-            } else {
-                fallbackCopyTextToClipboard(shortLink);
-            }
-        }
+.copy-btn {
+    padding: 8px;
+    background: #28a745;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        // Fallback copy function for older browsers
-        function fallbackCopyTextToClipboard(text) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.top = "0";
-            textArea.style.left = "0";
-            textArea.style.position = "fixed";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showToast('copyToast', 'Short link copied to clipboard!');
-            } catch (err) {
-                showToast('copyToast', 'Failed to copy link');
-            }
-            document.body.removeChild(textArea);
-        }
+.copy-btn:hover {
+    background: #1e7e34;
+}
 
-        // Handle encrypted link routing (add this to your main page or create a router)
-        function handleEncryptedRoute() {
-            const path = window.location.pathname;
-            if (path.startsWith('/r/')) {
-                const encryptedCode = path.substring(3);
-                // In a real implementation, you'd decode this properly
-                // For demo purposes, any /r/ link redirects to registration
-                window.location.href = '/Registration/reg-page.html';
-            }
-        }
+.copy-btn svg {
+    width: 16px;
+    height: 16px;
+}
+</style>
+`;
 
-        // Call on page load if needed
-        window.addEventListener('load', handleEncryptedRoute);
+// Add styles to head if they don't exist
+if (!document.querySelector('#copy-link-styles')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'copy-link-styles';
+    styleElement.textContent = buttonStyles.replace(/<\/?style>/g, '');
+    document.head.appendChild(styleElement);
+}
