@@ -1,88 +1,86 @@
-
-//end
-// Custom URL shortener with base64 encoding
-        function encodeUrl(url) {
-            // Remove localhost and common parts
-            const cleanUrl = url.replace(/http:\/\/localhost:\d+\//, '').replace(/%20/g, ' ');
-            
-            // Simple base64 encoding with URL-safe characters
-            const encoded = btoa(cleanUrl)
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_')
-                .replace(/=/g, '');
-            
-            // Create short hash (first 8 characters + last 4)
-            const shortHash = encoded.substring(0, 8) + encoded.slice(-4);
-            
-            return `${window.location.origin}/r/${shortHash}`;
+// Function to show toast messages
+        function showToast(toastId, message) {
+            const toast = document.getElementById(toastId);
+            if (message) {
+                toast.textContent = message;
+            }
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
         }
 
-        // Decode function (for reference - would be needed on server)
-        function decodeUrl(shortHash) {
-            // This would typically be handled by server-side routing
-            // For demo purposes, we'll store in localStorage
-            const storedUrls = JSON.parse(localStorage.getItem('shortUrls') || '{}');
-            return storedUrls[shortHash] || null;
+        // 1st Button - Open Service-X website
+        function openServiceX() {
+            showToast('serviceToast');
+            window.open('https://service-x-re-page.netlify.app', '_blank');
         }
 
-        function copyLink() {
-            const copyBtn = document.querySelector('.copy-btn');
-            const toast = document.getElementById('toast');
-            
-            // Get the original registration URL
-            const originalUrl = window.location.href.replace(/\/[^\/]*$/, '/Registration/reg-page.html');
-            
-            // Create shortened URL
-            const shortUrl = encodeUrl(originalUrl);
-            
-            // Store mapping in localStorage (in real app, this would be server-side)
-            const shortHash = shortUrl.split('/r/')[1];
-            const storedUrls = JSON.parse(localStorage.getItem('shortUrls') || '{}');
-            storedUrls[shortHash] = originalUrl;
-            localStorage.setItem('shortUrls', JSON.stringify(storedUrls));
-            
-            // Copy shortened URL to clipboard
-            navigator.clipboard.writeText(shortUrl).then(function() {
-                // Show success state
-                copyBtn.classList.add('copied');
-                toast.classList.add('show');
-                
-                // Reset after 2 seconds
-                setTimeout(() => {
-                    copyBtn.classList.remove('copied');
-                    toast.classList.remove('show');
-                }, 2000);
-            }).catch(function(err) {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = shortUrl;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                
-                // Show success state
-                copyBtn.classList.add('copied');
-                toast.classList.add('show');
-                
-                setTimeout(() => {
-                    copyBtn.classList.remove('copied');
-                    toast.classList.remove('show');
-                }, 2000);
-            });
+        // 2nd Button - Download APK
+        function downloadAPK() {
+            showToast('downloadToast');
+            // Create a download link for the APK file
+            const link = document.createElement('a');
+            link.href = 'app/service-x.in.apk';
+            link.download = 'service-x.in.apk';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
-        // URL redirect handler (add this to your main page)
-        function handleShortUrl() {
-            const path = window.location.pathname;
-            if (path.startsWith('/r/')) {
-                const shortHash = path.replace('/r/', '');
-                const originalUrl = decodeUrl(shortHash);
-                if (originalUrl) {
-                    window.location.href = originalUrl;
-                }
+        // 3rd Button - Open Registration Page
+        function openRegistration() {
+            window.location.href = 'Registration/reg-page.html';
+        }
+
+        // 4th Button - Copy encrypted registration link
+        function copyRegistrationLink() {
+            // Create encrypted/shortened link - using base64 encoding for simplicity
+            const originalLink = window.location.origin + '/Registration/reg-page.html';
+            const encryptedPath = btoa('Registration/reg-page.html').replace(/[+=]/g, '').substring(0, 12);
+            const shortLink = window.location.origin + '/r/' + encryptedPath;
+            
+            // Copy to clipboard
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shortLink).then(() => {
+                    showToast('copyToast', 'Short link copied to clipboard!');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(shortLink);
+                });
+            } else {
+                fallbackCopyTextToClipboard(shortLink);
             }
         }
 
-        // Check for short URL on page load
-        document.addEventListener('DOMContentLoaded', handleShortUrl);
+        // Fallback copy function for older browsers
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('copyToast', 'Short link copied to clipboard!');
+            } catch (err) {
+                showToast('copyToast', 'Failed to copy link');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Handle encrypted link routing (add this to your main page or create a router)
+        function handleEncryptedRoute() {
+            const path = window.location.pathname;
+            if (path.startsWith('/r/')) {
+                const encryptedCode = path.substring(3);
+                // In a real implementation, you'd decode this properly
+                // For demo purposes, any /r/ link redirects to registration
+                window.location.href = '/Registration/reg-page.html';
+            }
+        }
+
+        // Call on page load if needed
+        window.addEventListener('load', handleEncryptedRoute);
