@@ -26,7 +26,7 @@ const serviceCategories = [
     ],
     services: [
       {
-        id: "epfo-service",
+        id: `<div class="service-card" id="epfo-service">`,
         title: "EPFO વિથડ્રોઅલ",
         titleHtml: `માત્ર <span class="highlight">₹299  </span> માં PF વિથડ્રોઅલ  
         `,
