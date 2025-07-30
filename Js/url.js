@@ -1,11 +1,205 @@
-// Get service ID from URL
-const serviceId = new URLSearchParams(window.location.search).get('service');
+// તમારી વેબસાઇટના HEAD section માં આ JavaScript add કરો
 
-if (serviceId) {
-    // Show specific service card
-    showServiceCard(serviceId);
+// Service data (તમારા data.txt માંથી)
+const serviceCategories = [
+  {
+    id: "document-services",
+    title: "દસ્તાવેજી સેવાઓ",
+    services: [
+      {
+        id: "epfo-service",
+        title: "EPFO વિથડ્રોઅલ",
+        titleHtml: `માત્ર <span class="highlight">₹299</span> માં PF વિથડ્રોઅલ`,
+        shortDescription: "ઝડપી અને સરળ PF વિથડ્રોઅલ સેવા",
+        longDescription: `PF વિથડ્રોઅલ માટે નિષ્ણાત સહાયતા મેળવો...`,
+        price: 299,
+        images: ['img/epfo1.jpg', 'img/epfo3.jpg', 'img/epfo2.jpg'],
+        visitLink: 'https://wa.me/919157437847?text=હું%20EPFO%20સેવા%20વિશે%20માહિતી%20ચાહું છું'
+      },
+      {
+        id: "pan-card-service", 
+        title: "પાન કાર્ડ",
+        titleHtml: `માત્ર<span class="highlight"> ₹199</span> માં<br> પાન કાર્ડ મેળવો`,
+        shortDescription: "24 કલાકમાં તમારું પાન કાર્ડ ની PDF મેળવો",
+        price: 199,
+        images: ['img/pancard1.jpg', 'img/pancard2.jpg'],
+        visitLink: 'https://wa.me/919157437847?text=હું%20પાન%20કાર્ડ%20માટે%20અરજી%20કરવા%20માગું છું'
+      },
+      {
+        id: "pvc-aadhar-service",
+        title: "PVC આધાર કાર્ડ બુક કરો", 
+        titleHtml: `માત્ર <span class="highlight">₹149</span> માં PVC આધાર કાર્ડ બુક કરો`,
+        shortDescription: "આધાર કાર્ડ હવે પોકેટમાં — ઓર્ડર કરો PVC આધાર કાર્ડ માત્ર ₹149 માં",
+        longDescription: `તમારા આધાર કાર્ડને હવે પોકેટ સાઇઝના PVC કાર્ડમાં બદલાવવાનું શ્રેષ્ઠ તક...`,
+        price: 149,
+        images: ['img/aadhar.png'],
+        visitLink: 'https://wa.me/919157437847?text=હું%20PVC%20આધાર%20કાર્ડ%20સેવા%20બાબતે%20માહિતી%20ચાહું છું'
+      }
+    ]
+  }
+];
+
+// Function to find service by ID
+function findServiceById(serviceId) {
+  for (let category of serviceCategories) {
+    if (category.services) {
+      const service = category.services.find(s => s.id === serviceId);
+      if (service) return service;
+    }
+  }
+  return null;
 }
 
+// Function to show specific service card
+function showServiceCard(serviceId) {
+  const service = findServiceById(serviceId);
+  
+  if (!service) {
+    console.log('Service not found:', serviceId);
+    return false;
+  }
+
+  // Hide all other content
+  const mainContent = document.querySelector('.services-grid, .service-categories, main');
+  if (mainContent) {
+    mainContent.style.display = 'none';
+  }
+
+  // Create service display container
+  let serviceContainer = document.getElementById('direct-service-display');
+  if (!serviceContainer) {
+    serviceContainer = document.createElement('div');
+    serviceContainer.id = 'direct-service-display';
+    serviceContainer.style.cssText = `
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    `;
+    document.body.appendChild(serviceContainer);
+  }
+
+  // Display the service
+  serviceContainer.innerHTML = `
+    <div class="direct-service-card">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <button onclick="goBackToServices()" style="
+          background: #6c757d;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 20px;
+          cursor: pointer;
+          margin-bottom: 20px;
+        ">← પાછા જાઓ</button>
+      </div>
+      
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #333; margin-bottom: 10px;">${service.titleHtml || service.title}</h1>
+        <p style="font-size: 1.2rem; color: #666; margin-bottom: 15px;">${service.shortDescription}</p>
+        <div style="font-size: 1.8rem; color: #e74c3c; font-weight: bold;">કિંમત: ₹${service.price}</div>
+      </div>
+      
+      ${service.images ? `
+        <div style="display: flex; gap: 15px; margin-bottom: 25px; overflow-x: auto; justify-content: center;">
+          ${service.images.map(img => `
+            <img src="${img}" alt="${service.title}" style="
+              width: 200px;
+              height: 150px;
+              object-fit: cover;
+              border-radius: 12px;
+              flex-shrink: 0;
+              border: 2px solid #eee;
+            " onerror="this.style.display='none'">
+          `).join('')}
+        </div>
+      ` : ''}
+      
+      <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+        ${service.longDescription || service.shortDescription}
+      </div>
+      
+      <div style="text-align: center;">
+        <a href="${service.visitLink}" target="_blank" style="
+          display: inline-block;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          text-decoration: none;
+          padding: 15px 30px;
+          border-radius: 25px;
+          font-size: 1.2rem;
+          font-weight: bold;
+          transition: transform 0.3s;
+        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          🚀 હવેજ બુક કરો WhatsApp પર
+        </a>
+      </div>
+    </div>
+  `;
+
+  return true;
+}
+
+// Function to go back to main services
+function goBackToServices() {
+  const serviceContainer = document.getElementById('direct-service-display');
+  if (serviceContainer) {
+    serviceContainer.remove();
+  }
+  
+  const mainContent = document.querySelector('.services-grid, .service-categories, main');
+  if (mainContent) {
+    mainContent.style.display = 'block';
+  }
+
+  // Update URL without service parameter
+  const url = new URL(window.location);
+  url.searchParams.delete('service');
+  window.history.pushState({}, '', url);
+}
+
+// Main initialization function
+function initializeServiceNavigation() {
+  // Check URL for service parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const serviceId = urlParams.get('service');
+  
+  if (serviceId) {
+    console.log('Loading service:', serviceId);
+    
+    // Wait for page to load completely
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => showServiceCard(serviceId), 500);
+      });
+    } else {
+      setTimeout(() => showServiceCard(serviceId), 500);
+    }
+  }
+}
+
+// Handle browser back/forward
+window.addEventListener('popstate', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const serviceId = urlParams.get('service');
+  
+  if (serviceId) {
+    showServiceCard(serviceId);
+  } else {
+    goBackToServices();
+  }
+});
+
+// Initialize when script loads
+initializeServiceNavigation();
+
+// Export functions for global use
+window.showServiceCard = showServiceCard;
+window.goBackToServices = goBackToServices;
+window.findServiceById = findServiceById;
+//end
 // Custom URL shortener with base64 encoding
         function encodeUrl(url) {
             // Remove localhost and common parts
