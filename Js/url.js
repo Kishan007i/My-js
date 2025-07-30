@@ -1,4 +1,12 @@
-      // Custom URL shortener with base64 encoding
+// Get service ID from URL
+const serviceId = new URLSearchParams(window.location.search).get('service');
+
+if (serviceId) {
+    // Show specific service card
+    showServiceCard(serviceId);
+}
+
+// Custom URL shortener with base64 encoding
         function encodeUrl(url) {
             // Remove localhost and common parts
             const cleanUrl = url.replace(/http:\/\/localhost:\d+\//, '').replace(/%20/g, ' ');
