@@ -1,8 +1,5 @@
 
-// Page load થાય તે વખતે run કરો
-window.addEventListener('DOMContentLoaded', checkForDirectService);
 
-//end
 // Custom URL shortener with base64 encoding
         function encodeUrl(url) {
             // Remove localhost and common parts
