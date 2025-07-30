@@ -1,4 +1,36 @@
+// URL Parameters Check કરવા માટે
+function checkForDirectService() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceId = urlParams.get('service');
+    
+    if (serviceId) {
+        setTimeout(() => {
+            const serviceCard = document.getElementById(serviceId);
+            if (serviceCard) {
+                // Highlight effect
+                serviceCard.style.border = '3px solid #ff6b6b';
+                serviceCard.style.boxShadow = '0 0 20px rgba(255, 107, 107, 0.5)';
+                
+                // Smooth scroll
+                serviceCard.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                
+                // Remove highlight after 5 seconds
+                setTimeout(() => {
+                    serviceCard.style.border = '';
+                    serviceCard.style.boxShadow = '';
+                }, 5000);
+            }
+        }, 1000);
+    }
+}
 
+// Page load થાય તે વખતે run કરો
+window.addEventListener('DOMContentLoaded', checkForDirectService);
+
+//end
 // Custom URL shortener with base64 encoding
         function encodeUrl(url) {
             // Remove localhost and common parts
