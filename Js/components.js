@@ -387,6 +387,7 @@ function createServiceCard(service) {
   // Create content
 const content = document.createElement('div');
 content.className = 'card-content';
+  card.id = service.id;
 content.innerHTML = `
   <span class="voice">${service.voiceHtml}</span>
   <h2 class="card-title">${service.titleHtml || service.title}</h2>
