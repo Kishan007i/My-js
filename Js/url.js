@@ -1,43 +1,5 @@
 // તમારી વેબસાઇટના HEAD section માં આ JavaScript add કરો
 
-// Service data (તમારા data.txt માંથી)
-const serviceCategories = [
-  {
-    id: "document-services",
-    title: "દસ્તાવેજી સેવાઓ",
-    services: [
-      {
-        id: "epfo-service",
-        title: "EPFO વિથડ્રોઅલ",
-        titleHtml: `માત્ર <span class="highlight">₹299</span> માં PF વિથડ્રોઅલ`,
-        shortDescription: "ઝડપી અને સરળ PF વિથડ્રોઅલ સેવા",
-        longDescription: `PF વિથડ્રોઅલ માટે નિષ્ણાત સહાયતા મેળવો...`,
-        price: 299,
-        images: ['img/epfo1.jpg', 'img/epfo3.jpg', 'img/epfo2.jpg'],
-        visitLink: 'https://wa.me/919157437847?text=હું%20EPFO%20સેવા%20વિશે%20માહિતી%20ચાહું છું'
-      },
-      {
-        id: "pan-card-service", 
-        title: "પાન કાર્ડ",
-        titleHtml: `માત્ર<span class="highlight"> ₹199</span> માં<br> પાન કાર્ડ મેળવો`,
-        shortDescription: "24 કલાકમાં તમારું પાન કાર્ડ ની PDF મેળવો",
-        price: 199,
-        images: ['img/pancard1.jpg', 'img/pancard2.jpg'],
-        visitLink: 'https://wa.me/919157437847?text=હું%20પાન%20કાર્ડ%20માટે%20અરજી%20કરવા%20માગું છું'
-      },
-      {
-        id: "pvc-aadhar-service",
-        title: "PVC આધાર કાર્ડ બુક કરો", 
-        titleHtml: `માત્ર <span class="highlight">₹149</span> માં PVC આધાર કાર્ડ બુક કરો`,
-        shortDescription: "આધાર કાર્ડ હવે પોકેટમાં — ઓર્ડર કરો PVC આધાર કાર્ડ માત્ર ₹149 માં",
-        longDescription: `તમારા આધાર કાર્ડને હવે પોકેટ સાઇઝના PVC કાર્ડમાં બદલાવવાનું શ્રેષ્ઠ તક...`,
-        price: 149,
-        images: ['img/aadhar.png'],
-        visitLink: 'https://wa.me/919157437847?text=હું%20PVC%20આધાર%20કાર્ડ%20સેવા%20બાબતે%20માહિતી%20ચાહું છું'
-      }
-    ]
-  }
-];
 
 // Function to find service by ID
 function findServiceById(serviceId) {
