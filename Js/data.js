@@ -1,5 +1,3 @@
-  //language end      
-       
 // Service Categories Data with Subcategories
 const serviceCategories = [
   {
