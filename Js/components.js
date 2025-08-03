@@ -384,20 +384,32 @@ function createServiceCard(service) {
   carousel.appendChild(nextButton);
   carousel.appendChild(dotsContainer);
 
-  // Create content
-const content = document.createElement('div');
+ const content = document.createElement('div');
 content.className = 'card-content';
 content.innerHTML = `
   <span class="voice">${service.voiceHtml}</span>
   <h2 class="card-title">${service.titleHtml || service.title}</h2>
-  ${service.location ? `
-    <div class="location-info">
-      <svg class="location-icon" viewBox="0 0 24 24" width="14" height="14">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-      </svg>
-      <span class="location-text">${service.location}</span>
-    </div>
-  ` : ''}
+  
+  <div class="service-meta">
+    ${service.location ? `
+      <div class="meta-item">
+        <svg class="meta-icon" viewBox="0 0 24 24" width="14" height="14">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        </svg>
+        <span class="meta-text">${service.location}</span>
+      </div>
+    ` : ''}
+    
+    ${service.experience ? `
+      <div class="meta-item">
+      <svg class="meta-icon" viewBox="0 0 24 24" width="14" height="14">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+  </svg>
+        <span class="meta-text">${service.experience}</span>
+      </div>
+    ` : ''}
+  </div>
+  
   <p class="short-description">${service.shortDescription}</p>
   <div class="long-description">       
     <div class="long-description-content">
