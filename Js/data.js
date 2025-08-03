@@ -1,3 +1,5 @@
+  //language end      
+       
 // Service Categories Data with Subcategories
 const serviceCategories = [
   {
@@ -24,7 +26,7 @@ const serviceCategories = [
     ],
     services: [
       {
-        id: `<div class="service-card" id="epfo-service">`,
+        id: "epfo-service",
         title: "EPFO વિથડ્રોઅલ",
         titleHtml: `માત્ર <span class="highlight">₹299  </span> માં PF વિથડ્રોઅલ  
         `,
@@ -555,26 +557,6 @@ const serviceCategories = [
     ]
   },
   {
-    id: "Travels",
-    title: "મુસાફરી સેવાઓ",
-    icon: "svg/icons/travels.png",
-    description: "EPFO, પાન કાર્ડ, આધાર સહિત તમામ દસ્તાવેજ સંબંધિત સેવાઓ.",
-   subcategories: [
-      {
-        id: "privet",
-        name: "ખાનગી મુસાફરી",
-        icon: "svg/icons/pvt-car.png"
-      },
-      {
-        id: "tour",
-        name: "ટૂર અને ટ્રાવેલ્સ",
-        icon: "svg/icons/pvt-bus.png"
-       }
-],
-services: [
-]
-},
-{
   id: "event-services",
   title: "ઈવેન્ટ સેવાઓ",
   icon: "svg/icons/party.png",
@@ -608,7 +590,91 @@ services: [
     }
    ],
   services: [
-  /* beauty services*/
+  {
+  id: "khushi-photography-service",
+  title: "Khushi photography",
+  titleHtml: `Khushi photography<br><span class="highlight">booking only <br>₹15,999/-</span>`,
+  voiceHtml: `<button class="voice-button" data-voice="voice/khushi-photography.mp3">
+            <svg viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+        </button>`,
+  
+  shortDescription: "ખુશી ફોટોગ્રાફીના સાથે તમારી યાદોને કેદ કરો!",
+  longDescription: `અમે લગ્ન, જન્મદિન, એંગેજમેન્ટ અને કોર્પોરેટ ઇવેન્ટ્સ માટે  ફોટોગ્રાફી સર્વિસ પ્રદાન કરીએ છીએ. 1 વર્ષના અનુભવ સાથે અમે તમારી દરેક ખાસ મોમેન્ટ્સને કેપ્ચર કરીએ છીએ.
+  <div class="service-list"> 
+    <ul> 
+      <li><strong>• બેસિક ફોટોગ્રાફી પેકેજ:</strong> ₹15,999 </li>
+      <li><strong>• પ્રીમિયમ ફોટો આલ્બમ મળશે:</strong></li>
+       </ul> 
+  </div>
+  
+  <div class="experience-info">
+    <p><strong>અનુભવ:</strong> 1 વર્ષ | <strong>સ્થળ:</strong> ભરૂચ</p>
+    <p><strong>સુવિધાઓ:</strong> પ્રોફેશનલ ફોટોગ્રાફી, ફોટો આલ્બમ</p>
+  </div>`,
+  
+  price: 15999,
+  experience: "1 year exp",
+  location: "Bharuch",
+  facilities: ["photography", "photo album", "digital copy"],
+  advance: 5999,
+  
+  images: [
+    'img/khushi1.jpg',
+    'img/khushi2.jpg',
+    'img/khushi3.jpg',
+    'img/khushi4.jpg'
+  ],
+  
+  visitLink: 'https://wa.me/919157437847?text=I%20want%20to%20book%20Khushi%20Photography%20for%20my%20event',
+  category: "event-services",
+  subcategory: "cameraman",
+  keywords: ["khushi", "photography", "photo", "album", "wedding", "bharuch", "event", "photographer"]
+},
+/* {
+  id: "krishna-photography-service",
+  title: "Krishna Photography",
+  titleHtml: `Krishna Photography<br><span class="highlight">booking only <br>₹15,999/-</span>`,
+  voiceHtml: `<button class="voice-button" data-voice="voice/krishnaphotography.mp3">
+            <svg viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+        </button>`,
+
+  shortDescription: "કૃષ્ણ ફોટોગ્રાફી સાથે તમારી યાદોને અનમોલ બનાવો!",
+  longDescription: `અમે લગ્ન, જન્મદિન, એંગેજમેન્ટ અને કોર્પોરેટ ઇવેન્ટ્સ માટે  વ્યાવસાયિક ફોટોગ્રાફી અને વિડીયોગ્રાફી સર્વિસ પ્રદાન કરીએ છીએ. 3 વર્ષના અનુભવ સાથે અમે તમારી દરેક ખાસ મોમેન્ટ્સને સુંદર રીતે કેપ્ચર કરીએ છીએ.
+  <div class="service-list"> 
+    <ul> 
+      <li><strong>• બેસિક ફોટોગ્રાફી પેકેજ:</strong> ₹15,999 </li>
+      <li><strong>• ડ્રોન શૂટ, પ્રિ-વેડિંગ શૂટ ઉપલબ્ધ:</strong></li>
+    </ul> 
+  </div>
+
+  <div class="experience-info">
+    <p><strong>અનુભવ:</strong> 3 વર્ષ | <strong>સ્થળ:</strong> જંબુસર</p>
+    <p><strong>સુવિધાઓ:</strong> વિડીયોગ્રાફી, ફોટોશૂટ, ડ્રોન શૂટ, પ્રિ-વેડિંગ</p>
+  </div>`,
+
+  price: 15999,
+  experience: "3 years exp",
+  location: "Jambusar",
+  facilities: ["videography", "photoshoot", "photography", "drone", "pre-wedding shoot"],
+  advance: 5999,
+
+  images: [
+    'img/krishna1.jpg',
+    'img/krishna2.jpg',
+    'img/krishna3.jpg',
+    'img/krishna4.jpg'
+  ],
+
+  visitLink: 'https://wa.me/919157437847?text=I%20want%20to%20book%20Krishna%20Photography%20for%20my%20event',
+  category: "event-services",
+  subcategory: "cameraman",
+  keywords: ["krishna", "photography", "videography", "drone", "pre-wedding", "jambusar", "event", "photographer"]
+},
+ */  /* beauty services*/
 /*   {
   id: "beauty-care",
   title: "હીના દુલ્હન મેકઅપ",
@@ -663,7 +729,30 @@ services: [
       category: "event-services",
       subcategory: "dj-sound",
       keywords: ["dev", "dj", "sound", "music", "party", "wedding", "event"]
-    }*/    ]
-  }
+    }*/
+    
+    
+        ]
+  },  
+  {
+    id: "Travels",
+    title: "મુસાફરી સેવાઓ",
+    icon: "svg/icons/travels.png",
+    description: "EPFO, પાન કાર્ડ, આધાર સહિત તમામ દસ્તાવેજ સંબંધિત સેવાઓ.",
+   subcategories: [
+      {
+        id: "privet",
+        name: "ખાનગી મુસાફરી",
+        icon: "svg/icons/pvt-car.png"
+      },
+      {
+        id: "tour",
+        name: "ટૂર અને ટ્રાવેલ્સ",
+        icon: "svg/icons/pvt-bus.png"
+       }
+],
+services: [
+]
+}
 ];
 
